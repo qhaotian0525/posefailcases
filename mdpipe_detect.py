@@ -4,36 +4,6 @@ from mediapipe.tasks.python import vision
 import cv2
 import numpy as np
 
-MARGIN = 10  # pixels
-ROW_SIZE = 10  # pixels
-FONT_SIZE = 1
-FONT_THICKNESS = 1
-TEXT_COLOR = (255, 0, 0)  # red
-
-
-model_path = './efficientdet_lite0.tflite'
-
-BaseOptions = mp.tasks.BaseOptions
-ObjectDetector = mp.tasks.vision.ObjectDetector
-ObjectDetectorOptions = mp.tasks.vision.ObjectDetectorOptions
-VisionRunningMode = mp.tasks.vision.RunningMode
-
-options = ObjectDetectorOptions(
-    base_options=BaseOptions(model_asset_path= model_path),
-    max_results=5,
-    running_mode=VisionRunningMode.IMAGE,
-    category_allowlist = ["person"],
-    score_threshold = 0.5
-    )
-
-imggg = cv2.imread("./e.png")
-imggg = cv2.cvtColor(imggg, cv2.COLOR_BGR2RGB)
-#mp_image = mp.Image.create_from_file('./a.png')
-mp_image = mp.Image(image_format = mp.ImageFormat.SRGB, data = imggg)
-
-
-detector = ObjectDetector.create_from_options(options)
-detection_result = detector.detect(mp_image)
 
 def visualize(
     image,
@@ -65,16 +35,83 @@ def visualize(
 
   return image
 
+MARGIN = 10  # pixels
+ROW_SIZE = 10  # pixels
+FONT_SIZE = 1
+FONT_THICKNESS = 1
+TEXT_COLOR = (255, 0, 0)  # red
 
 
+model_path = './efficientdet_lite0.tflite'
+
+BaseOptions = mp.tasks.BaseOptions
+ObjectDetector = mp.tasks.vision.ObjectDetector
+ObjectDetectorOptions = mp.tasks.vision.ObjectDetectorOptions
+VisionRunningMode = mp.tasks.vision.RunningMode
+
+options = ObjectDetectorOptions(
+    base_options=BaseOptions(model_asset_path= model_path),
+    max_results=5,
+    running_mode=VisionRunningMode.IMAGE,
+    category_allowlist = ["person"],
+    score_threshold = 0.5
+    )
+detector = ObjectDetector.create_from_options(options)
+
+def model_init(img_indicator, model_path) -> ObjectDetector:
+  BaseOptions = mp.tasks.BaseOptions
+  ObjectDetector = mp.tasks.vision.ObjectDetector
+  ObjectDetectorOptions = mp.tasks.vision.ObjectDetectorOptions
+  VisionRunningMode = mp.tasks.vision.RunningMode
+  if img_indicator == True:
+    mode = VisionRunningMode.IMAGE
+  else:
+    mode = VisionRunningMode.VIDEO
+  options = ObjectDetectorOptions(
+    base_options=BaseOptions(model_asset_path= model_path),
+    max_results=5,
+    running_mode=VisionRunningMode.IMAGE,
+    category_allowlist = ["person"],
+    score_threshold = 0.5
+    )
+  detector = ObjectDetector.create_from_options(options)
+  return detector
+
+
+def model_predict(detector, file_path, img_indicator, show_img):
+  if img_indicator == True:
+    img = cv2.imread(file_path)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    mp_image = mp.Image(image_format = mp.ImageFormat.SRGB, data = img)
+    detection_result = detector.detect(mp_image)
+    image_copy = np.copy(mp_image.numpy_view())
+    annotated_image = visualize(image_copy, detection_result)
+    rgb_annotated_image = cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB)
+    if show_img == True:
+      cv2.imshow("F", rgb_annotated_image)
+      cv2.waitKey(0)
+      cv2.destroyAllWindows()
+    cv2.imwrite("")
+
+
+
+
+
+
+
+
+
+imggg = cv2.imread("./e.png")
+imggg = cv2.cvtColor(imggg, cv2.COLOR_BGR2RGB)
+#mp_image = mp.Image.create_from_file('./a.png')
+mp_image = mp.Image(image_format = mp.ImageFormat.SRGB, data = imggg)
+
+detection_result = detector.detect(mp_image)
 image_copy = np.copy(mp_image.numpy_view())
 annotated_image = visualize(image_copy, detection_result)
 rgb_annotated_image = cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB)
-
 cv2.imshow("F", rgb_annotated_image)
 cv2.waitKey(0)
-
 cv2.destroyAllWindows()
-
-
 print(detection_result.detections[0].bounding_box)
+
